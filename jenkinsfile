@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    environment {
+        IMAGE_NAME = 'developerpk16/php-api'
+        CONTAINER_NAME = 'php-api-container'
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'development', url: 'https://github.com/developerpk16/php-api.git'
+            }
+        }
+        stage('Build Image') {
+            steps {
+                sh "docker build -t ${IMAGE_NAME}:latest ."
+            }
+        }
+        stage('Deploy Container') {
+            steps {
+                sh """
+                    docker rm -f ${CONTAINER_NAME} || true
+                    docker run -d --name ${CONTAINER_NAME} -p 8000:80 ${IMAGE_NAME}:latest
+                """
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Application Deployed Successfully'
+        }
+        failure {
+            echo 'Failed due to misconfiguration or error'
+        }
+    }
+}
